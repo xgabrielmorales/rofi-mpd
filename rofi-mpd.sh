@@ -27,10 +27,10 @@ play_song() {
 	# If there is at least one song in the playlist, add it in front of it and play it.
 	else
 		CURRENT_POSITION=$(mpc --port $PORT status | sed -n '2{p;q}' | awk '{print $2}' | sed -E 's/(#|\/.*)//g');
-		END_POSITIONITION=$(mpc --port $PORT playlist | wc -l);
+		END_POSITION=$(mpc --port $PORT playlist | wc -l);
 
 		mpc --port $PORT add "$SONG_PATH";
-		mpc --port $PORT move $(($END_POSITIONITION+1)) $(($CURRENT_POSITION+1));
+		mpc --port $PORT move $(($END_POSITION+1)) $(($CURRENT_POSITION+1));
 		mpc --port $PORT play $(($CURRENT_POSITION+1));
 	fi
 }
@@ -170,23 +170,19 @@ list_by_album_artist() {
 	list_by_album "$ARTIST_NAME";
 }
 
-case $1 in
-	*)
-		MENU=$(printf "%s\n%s\n%s\n%s\n" \
-			"All Songs"                  \
-			"Album Aritst"               \
-			"Album"                      \
-			"Playlist"                   \
-			| $ROFI_MENU "Library");
+MENU=$(printf "%s\n%s\n%s\n%s\n" \
+	"All Songs"                  \
+	"Album Aritst"               \
+	"Album"                      \
+	"Playlist"                   \
+	| $ROFI_MENU "Library");
 
-		if [ "$MENU" = "Album Aritst" ]; then
-			list_by_album_artist;
-		elif [ "$MENU" = "Album" ]; then
-			list_by_album;
-		elif [ "$MENU" = "All Songs" ]; then
-			list_all_songs;
-		elif [ "$MENU" = "Playlist" ]; then
-			list_by_playlist;
-		fi
-	;;
-esac
+if [ "$MENU" = "Album Aritst" ]; then
+	list_by_album_artist;
+elif [ "$MENU" = "Album" ]; then
+	list_by_album;
+elif [ "$MENU" = "All Songs" ]; then
+	list_all_songs;
+elif [ "$MENU" = "Playlist" ]; then
+	list_by_playlist;
+fi
