@@ -1,3 +1,4 @@
+#!/usr/bin/bash
 # [MPD CONFIG]
 PORT=6600;
 
@@ -46,7 +47,6 @@ play_playlist() {
 
 list_by_playlist() {
 	PLAYLIST=$(mpc --port $PORT lsplaylist | $ROFI);
-	echo $PLAYLIST
 
 	if [ "$PLAYLIST" = "" ]; then
 		exit;
@@ -90,15 +90,44 @@ list_by_album() {
 
 	if [ "$ARTIST_NAME" = "" ]; then
 		ALBUM_NAME=$(mpc --port $PORT list Album | $ROFI);
-		list_album_titles "$ALBUM_NAME";
 	else
 		ALBUM_NAME=$(mpc --port $PORT list album AlbumArtist "$ARTIST_NAME" | $ROFI);
+	fi
 
-		if [ "$ALBUM_NAME" = "" ]; then
-			exit;
+	if [ "$ALBUM_NAME" = "" ]; then
+		exit
+	fi
+
+	OPTIONS=$(printf '%s\n%s\n%s\n%s' \
+		"Listen to the album"         \
+		"Listen to a track"           \
+		"Add album to playlist"       \
+		"Add a track to the playlist" \
+		| $ROFI_MENU);
+
+	if [ "$OPTIONS" = "Listen to the album" ]; then
+		mpc --port $PORT clear
+
+		if [ "$ARTIST_NAME" = "" ]; then
+			mpc --port $PORT find Album "$ALBUM_NAME" | mpc --port $PORT add
+		else
+			mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | mpc --port $PORT add
 		fi
 
+		mpc --port $PORT play
+	elif [ "$OPTIONS" = "Listen to a track" ]; then
 		list_album_titles "$ALBUM_NAME" "$ARTIST_NAME";
+	elif [ "$OPTIONS" = "Add album to playlist" ]; then
+		if [ "$ARTIST_NAME" = "" ]; then
+			mpc --port $PORT find Album "$ALBUM_NAME" | mpc --port $PORT add | mpc --port $PORT add
+		else
+			mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | mpc --port $PORT add
+		fi
+	elif [ "$OPTIONS" = "Add a track to the playlist" ]; then
+		echo "Entro?"
+		notify-send "Esta función aun no está disponible";
+	else
+		exit;
 	fi
 }
 
@@ -114,7 +143,13 @@ list_by_album_artist() {
 
 case $1 in
 	*)
-		MENU=$(echo -e "All Songs\nAlbum Aritst\nAlbum\nPlaylist" | $ROFI_MENU)
+		MENU=$(printf "%s\n%s\n%s\n%s\n" \
+			"All Songs"                  \
+			"Album Aritst"               \
+			"Album"                      \
+			"Playlist"                   \
+			| $ROFI_MENU);
+
 		if [ "$MENU" = "Album Aritst" ]; then
 			list_by_album_artist;
 		elif [ "$MENU" = "Album" ]; then
