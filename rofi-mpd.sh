@@ -41,18 +41,18 @@ play_playlist() {
 	OPTIONS=$(printf '%s\n%s\n%s\n%s' \
 		"Listen now"                  \
 		"Add to current playlist"     \
-		| $ROFI_MENU "Options");
+		| $ROFI -p "Options");
 
-	if [ "$OPTIONS" = "Listen now" ]; then
-		mpc --port $PORT clear
-		mpc --port $PORT load "$PLAYLIST_NAME"
-		mpc --port $PORT play
-	elif [ "$OPTIONS" = "Add to current playlist" ]; then
-		mpc --port $PORT load "$PLAYLIST_NAME"
-	else
-		exit;
-	fi
-
+	case $OPTIONS in
+		"Listen now")
+			mpc --port $PORT clear
+			mpc --port $PORT load "$PLAYLIST_NAME"
+			mpc --port $PORT play
+			;;
+		"Add to current playlist")
+			mpc --port $PORT load "$PLAYLIST_NAME"
+			;;
+	esac
 }
 
 list_by_playlist() {
@@ -73,13 +73,10 @@ list_all_songs() {
 		"Add to playlist"             \
 		| $ROFI_MENU "Options");
 
-	if [ "$OPTIONS" = "Listen now" ]; then
-		play_song "$TITLE";
-	elif [ "$OPTIONS" = "Add to playlist" ]; then
-		mpc --port $PORT find title "$TITLE" | mpc --port $PORT add;
-	else
-		exit;
-	fi
+	case $OPTIONS in
+		"Listen now") play_song "$TITLE";;
+		"Add to playlist") mpc --port $PORT find title "$TITLE" | mpc --port $PORT add;;
+	esac
 }
 
 list_album_titles() {
@@ -113,41 +110,39 @@ list_by_album() {
 		"Listen to a track"           \
 		"Add album to playlist"       \
 		"Add a track to the playlist" \
-		| $ROFI_MENU "Options");
+		| $ROFI -p "Options");
 
-	if [ "$OPTIONS" = "Listen to the album" ]; then
-		mpc --port $PORT clear;
-
-		if [ "$ARTIST_NAME" = "" ]; then
-			mpc --port $PORT find Album "$ALBUM_NAME" | mpc --port $PORT add;
-		else
-			mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | mpc --port $PORT add;
-		fi
-
-		mpc --port $PORT play;
-	elif [ "$OPTIONS" = "Listen to a track" ]; then
-		list_album_titles "$ALBUM_NAME" "$ARTIST_NAME";
-	elif [ "$OPTIONS" = "Add album to playlist" ]; then
-		if [ "$ARTIST_NAME" = "" ]; then
-			mpc --port $PORT find Album "$ALBUM_NAME" | mpc --port $PORT add;
-		else
-			mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | mpc --port $PORT add;
-		fi
-	elif [ "$OPTIONS" = "Add a track to the playlist" ]; then
-
-		if [ "$ARTIST_NAME" = "" ]; then
-			echo $ALBUM_NAME
-			TITLE=$(mpc --port $PORT --format %title% find Album "$ALBUM_NAME" | $ROFI);
-			SONG_PATH=$(mpc --port $PORT find Album "$ALBUM_NAME" Title "$TITLE");
-		else
-			TITLE=$(mpc --port $PORT --format %title% find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | $ROFI);
-			SONG_PATH=$(mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" Title "$TITLE");
-		fi
-
-		mpc --port $PORT add "$SONG_PATH";
-	else
-		exit;
-	fi
+	case $OPTIONS in
+		"Listen to the album")
+			mpc --port $PORT clear;
+			if [ -z $ARTIST_NAME ]; then
+				mpc --port $PORT find Album "$ALBUM_NAME" | mpc --port $PORT add;
+			else
+				mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | mpc --port $PORT add;
+			fi
+			mpc --port $PORT play;
+			;;
+		"Listen to a track")
+			list_album_titles "$ALBUM_NAME" "$ARTIST_NAME";
+			;;
+		"Add album to playlist")
+			if [ -z $ARTIST_NAME ]; then
+				mpc --port $PORT find Album "$ALBUM_NAME" | mpc --port $PORT add;
+			else
+				mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | mpc --port $PORT add;
+			fi
+			;;
+		"Add a track to the playlist")
+			if [ -z $ARTIST_NAME ]; then
+				TITLE=$(mpc --port $PORT --format %title% find Album "$ALBUM_NAME" | $ROFI -p "Search");
+				SONG_PATH=$(mpc --port $PORT find Album "$ALBUM_NAME" Title "$TITLE");
+			else
+				TITLE=$(mpc --port $PORT --format %title% find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | $ROFI -p "Search");
+				SONG_PATH=$(mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" Title "$TITLE");
+			fi
+			mpc --port $PORT add "$SONG_PATH";
+			;;
+	esac
 }
 
 list_by_album_artist() {
@@ -158,19 +153,16 @@ list_by_album_artist() {
 	list_by_album "$ARTIST_NAME";
 }
 
-MENU=$(printf "%s\n%s\n%s\n%s\n" \
-	"All Songs"                  \
-	"Album Aritst"               \
-	"Album"                      \
-	"Playlist"                   \
-	| $ROFI_MENU "Library");
+all_songs="All Songs"
+album_artist="Album Aritst"
+albums="Albums"
+playlist="Playlists"
 
-if [ "$MENU" = "Album Aritst" ]; then
-	list_by_album_artist;
-elif [ "$MENU" = "Album" ]; then
-	list_by_album;
-elif [ "$MENU" = "All Songs" ]; then
-	list_all_songs;
-elif [ "$MENU" = "Playlist" ]; then
-	list_by_playlist;
-fi
+MENU=$(echo -e "$all_songs\n$album_artist\n$albums\n$playlist" | $ROFI -p "Library");
+
+case $MENU in
+	"$all_songs")    list_all_songs;;
+	"$album_artist") list_by_album_artist;;
+	"$albums")       list_by_album;;
+	"$playlist")     list_by_playlist;;
+esac
