@@ -11,9 +11,9 @@ play_song() {
 	ALBUM_NAME=$2;
 	ARTIST_NAME=$3;
 
-	if [[ "$ARTIST_NAME" = "" && "$ALBUM_NAME" = "" ]]; then
+	if [[ -z $ARTIST_NAME && -z $ALBUM_NAME ]]; then
 		SONG_PATH=$(mpc --port $PORT find Title "$TITLE");
-	elif [ "$AlbumArtist" = "" ]; then
+	elif [ -z $ARTIST_NAME ]; then
 		SONG_PATH=$(mpc --port $PORT find Album "$ALBUM_NAME" Title "$TITLE");
 	else
 		SONG_PATH=$(mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" Title "$TITLE");
@@ -58,9 +58,7 @@ play_playlist() {
 list_by_playlist() {
 	PLAYLIST=$(mpc --port $PORT lsplaylist | $ROFI);
 
-	if [ "$PLAYLIST" = "" ]; then
-		exit;
-	fi
+	[[ -z $PLAYLIST ]] && exit;
 
 	play_playlist $PLAYLIST
 }
@@ -68,9 +66,7 @@ list_by_playlist() {
 list_all_songs() {
 	TITLE=$(mpc --port $PORT list title | $ROFI);
 
-	if [ "$TITLE" = "" ]; then
-		exit;
-	fi
+	[[ -z $TITLE ]] && exit;
 
 	OPTIONS=$(printf '%s\n%s\n%s\n%s' \
 		"Listen now"                  \
@@ -90,17 +86,13 @@ list_album_titles() {
 	ALBUM_NAME=$1;
 	ARTIST_NAME=$2;
 
-	if [[ "$ARTIST_NAME" = "" && "$ALBUM_NAME" = "" ]]; then
-		exit;
-	elif [[ "$ARTIST_NAME" = "" ]]; then
+	if [ -z $ARTIST_NAME ]; then
 		TITLE=$(mpc --port "$PORT" --format %title% find Album "$ALBUM_NAME" | $ROFI);
 	else
 		TITLE=$(mpc --port "$PORT" --format %title% find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | $ROFI);
 	fi
 
-	if [ "$TITLE" = "" ]; then
-		exit;
-	fi
+	[[ -z $TITLE ]] && exit;
 
 	play_song "$TITLE" "$ALBUM_NAME" "$ARTIST_NAME";
 }
@@ -108,15 +100,13 @@ list_album_titles() {
 list_by_album() {
 	ARTIST_NAME=$1;
 
-	if [ "$ARTIST_NAME" = "" ]; then
-		ALBUM_NAME=$(mpc --port $PORT list Album | $ROFI);
+	if [ -z $ARTIST_NAME ]; then
+		ALBUM_NAME=$(mpc --port $PORT list Album | $ROFI -p "Search");
 	else
-		ALBUM_NAME=$(mpc --port $PORT list album AlbumArtist "$ARTIST_NAME" | $ROFI);
+		ALBUM_NAME=$(mpc --port $PORT list album AlbumArtist "$ARTIST_NAME" | $ROFI -p "Albums");
 	fi
 
-	if [ "$ALBUM_NAME" = "" ]; then
-		exit;
-	fi
+	[[ -z $ALBUM_NAME ]] && exit;
 
 	OPTIONS=$(printf '%s\n%s\n%s\n%s' \
 		"Listen to the album"         \
@@ -161,11 +151,9 @@ list_by_album() {
 }
 
 list_by_album_artist() {
-	ARTIST_NAME="$(mpc --port $PORT list AlbumArtist | $ROFI)";
+	ARTIST_NAME="$(mpc --port $PORT list AlbumArtist | $ROFI -p "Search")";
 
-	if [ "$ARTIST_NAME" = "" ]; then
-		exit;
-	fi
+	[[ -z $ARTIST_NAME ]] && exit;
 
 	list_by_album "$ARTIST_NAME";
 }
