@@ -3,8 +3,7 @@
 PORT=6600;
 
 # [ROFI CONFIG]
-ROFI="rofi -i -dmenu -p Search";
-ROFI_MENU="rofi -i -dmenu -p ";
+ROFI="rofi -i -dmenu";
 
 play_song() {
 	TITLE=$1;
@@ -56,7 +55,7 @@ play_playlist() {
 }
 
 list_by_playlist() {
-	PLAYLIST=$(mpc --port $PORT lsplaylist | $ROFI);
+	PLAYLIST=$(mpc --port $PORT lsplaylist | $ROFI -p "Search");
 
 	[[ -z $PLAYLIST ]] && exit;
 
@@ -64,14 +63,14 @@ list_by_playlist() {
 }
 
 list_all_songs() {
-	TITLE=$(mpc --port $PORT list title | $ROFI);
+	TITLE=$(mpc --port $PORT list title | $ROFI -p "Search");
 
 	[[ -z $TITLE ]] && exit;
 
 	OPTIONS=$(printf '%s\n%s\n%s\n%s' \
 		"Listen now"                  \
 		"Add to playlist"             \
-		| $ROFI_MENU "Options");
+		| $ROFI -p "Options");
 
 	case $OPTIONS in
 		"Listen now") play_song "$TITLE";;
