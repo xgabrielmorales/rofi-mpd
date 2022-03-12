@@ -3,7 +3,8 @@
 PORT=6600;
 
 # [ROFI CONFIG]
-ROFI="rofi -i -dmenu";
+ROFI_CONFIG_PATH="~/.config/rofi/default/rofi-mpd.rasi"
+ROFI="rofi -theme $ROFI_CONFIG_PATH -i -dmenu";
 
 play_song() {
 	TITLE=$1;
@@ -60,6 +61,14 @@ list_by_playlist() {
 	[[ -z $PLAYLIST ]] && exit;
 
 	play_playlist $PLAYLIST
+}
+
+list_current_playlist() {
+	TITLE=$(mpc --port $PORT playlist | grep -Po '(?<=\- ).*' | $ROFI -p "Search");
+
+	[[ -z $TITLE ]] && exit;
+
+	mpc --port $PORT searchplay Title "$TITLE"
 }
 
 list_all_songs() {
@@ -152,16 +161,18 @@ list_by_album_artist() {
 	list_by_album "$ARTIST_NAME";
 }
 
-all_songs="All Songs"
 album_artist="Album Aritst"
+all_songs="All Songs"
 albums="Albums"
 playlist="Playlists"
+current_playlist="Current Playlist"
 
-MENU=$(echo -e "$all_songs\n$album_artist\n$albums\n$playlist" | $ROFI -p "Library");
+MENU=$(echo -e "$album_artist\n$all_songs\n$albums\n$current_playlist" | $ROFI -p "Library");
 
 case $MENU in
-	"$all_songs")    list_all_songs;;
-	"$album_artist") list_by_album_artist;;
-	"$albums")       list_by_album;;
-	"$playlist")     list_by_playlist;;
+	"$all_songs")        list_all_songs;;
+	"$album_artist")     list_by_album_artist;;
+	"$albums")           list_by_album;;
+	#"$playlist")         list_by_playlist;;
+	"$current_playlist") list_current_playlist;;
 esac
