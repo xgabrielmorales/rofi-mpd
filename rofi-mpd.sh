@@ -20,18 +20,14 @@ play_song() {
 	fi
 
 	# If the playlist is empty, just add the song and play it
-	if [ "$(mpc --port $PORT playlist | wc -l)" = "0" ]; then
+	if [ $(mpc --port $PORT playlist | wc -l) -eq 0 ]; then
 		mpc --port $PORT add "$SONG_PATH";
 		mpc --port $PORT play;
 
 	# If there is at least one song in the playlist, add it in front of it and play it.
 	else
-		CURRENT_POSITION=$(mpc --port $PORT status | sed -n '2{p;q}' | awk '{print $2}' | sed -E 's/(#|\/.*)//g');
-		END_POSITION=$(mpc --port $PORT playlist | wc -l);
-
-		mpc --port $PORT add "$SONG_PATH";
-		mpc --port $PORT move $(($END_POSITION+1)) $(($CURRENT_POSITION+1));
-		mpc --port $PORT play $(($CURRENT_POSITION+1));
+		mpc --port $PORT insert "$SONG_PATH";
+		mpc --port $PORT next
 	fi
 }
 
@@ -64,7 +60,7 @@ list_by_playlist() {
 }
 
 list_current_playlist() {
-	TITLE=$(mpc --port $PORT playlist | grep -Po '(?<=\- ).*' | $ROFI -p "Search");
+	TITLE=$(mpc --format %title% --port $PORT playlist | $ROFI -p "Search");
 
 	[[ -z $TITLE ]] && exit;
 
@@ -83,7 +79,7 @@ list_all_songs() {
 
 	case $OPTIONS in
 		"Listen now") play_song "$TITLE";;
-		"Add to playlist") mpc --port $PORT find title "$TITLE" | mpc --port $PORT add;;
+		"Add to playlist") mpc --port $PORT findadd title "$TITLE";;
 	esac
 }
 
@@ -123,32 +119,35 @@ list_by_album() {
 	case $OPTIONS in
 		"Listen to the album")
 			mpc --port $PORT clear;
+
 			if [ -z $ARTIST_NAME ]; then
-				mpc --port $PORT find Album "$ALBUM_NAME" | mpc --port $PORT add;
+				mpc --port $PORT findadd Album "$ALBUM_NAME";
+			else
+				mpc --port $PORT findadd AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME";
+			fi
+
 			else
 				mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | mpc --port $PORT add;
 			fi
-			mpc --port $PORT play;
 			;;
 		"Listen to a track")
 			list_album_titles "$ALBUM_NAME" "$ARTIST_NAME";
 			;;
 		"Add album to playlist")
 			if [ -z $ARTIST_NAME ]; then
-				mpc --port $PORT find Album "$ALBUM_NAME" | mpc --port $PORT add;
+				mpc --port $PORT findadd Album "$ALBUM_NAME";
 			else
-				mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | mpc --port $PORT add;
+				mpc --port $PORT findadd AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME";
 			fi
 			;;
 		"Add a track to the playlist")
 			if [ -z $ARTIST_NAME ]; then
 				TITLE=$(mpc --port $PORT --format %title% find Album "$ALBUM_NAME" | $ROFI -p "Search");
-				SONG_PATH=$(mpc --port $PORT find Album "$ALBUM_NAME" Title "$TITLE");
+				SONG_PATH=$(mpc --port $PORT findadd Album "$ALBUM_NAME" Title "$TITLE");
 			else
 				TITLE=$(mpc --port $PORT --format %title% find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | $ROFI -p "Search");
-				SONG_PATH=$(mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" Title "$TITLE");
+				mpc --port $PORT findadd AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" Title "$TITLE"
 			fi
-			mpc --port $PORT add "$SONG_PATH";
 			;;
 	esac
 }
