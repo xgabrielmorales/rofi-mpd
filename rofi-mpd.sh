@@ -126,8 +126,11 @@ list_by_album() {
 				mpc --port $PORT findadd AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME";
 			fi
 
+			# If the album only has one song, just play it.
+			if [ $(mpc --port $PORT playlist | wc -l) -eq 1 ]; then
+				mpc --port $PORT play;
 			else
-				mpc --port $PORT find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | mpc --port $PORT add;
+				list_current_playlist
 			fi
 			;;
 		"Listen to a track")
