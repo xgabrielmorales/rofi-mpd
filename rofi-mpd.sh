@@ -167,7 +167,7 @@ albums="Albums"
 playlist="Playlists"
 current_playlist="Current Playlist"
 
-MENU=$(echo -e "$album_artist\n$all_songs\n$albums\n$current_playlist" | $ROFI -p "Library");
+MENU=$(echo -e "$all_songs\n$album_artist\n$albums\n$current_playlist" | $ROFI -p "Library");
 
 case $MENU in
 	"$all_songs")        list_all_songs;;
