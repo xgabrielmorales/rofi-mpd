@@ -118,20 +118,18 @@ list_by_album() {
 
 	case $OPTIONS in
 		"Listen to the album")
-			mpc --port $PORT clear;
 
 			if [ -z $ARTIST_NAME ]; then
+				song_to_play=$(mpc --port $PORT --format %title% find Album "$ALBUM_NAME" | $ROFI -p "Search")
+				mpc --port $PORT clear;
 				mpc --port $PORT findadd Album "$ALBUM_NAME";
 			else
+				song_to_play=$(mpc --port $PORT --format %title% find AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME" | $ROFI -p "Search")
+				mpc --port $PORT clear;
 				mpc --port $PORT findadd AlbumArtist "$ARTIST_NAME" Album "$ALBUM_NAME";
 			fi
 
-			# If the album only has one song, just play it.
-			if [ $(mpc --port $PORT playlist | wc -l) -eq 1 ]; then
-				mpc --port $PORT play;
-			else
-				list_current_playlist
-			fi
+			mpc --port $PORT searchplay Title "$song_to_play"
 			;;
 		"Listen to a track")
 			list_album_titles "$ALBUM_NAME" "$ARTIST_NAME";
