@@ -117,7 +117,7 @@ list_album_titles() {
     TITLE=$(mpc \
         --port $PORT \
         --format "[%track%. %title%]" \
-        search \
+        find \
             AlbumArtist "$ALBUM_ARTIST" \
             Album "$ALBUM_NAME" \
             | $ROFI -p "Search" \
